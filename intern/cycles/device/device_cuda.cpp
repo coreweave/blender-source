@@ -647,7 +647,7 @@ class CUDADevice : public Device {
     cuda_assert(cuCtxSynchronize());
 
     cuMemGetInfo(&free_after, &total);
-    VLOG(1) << "Local memory reserved " << string_human_readable_number(free_before - free_after)
+    LOG(INFO) << "Local memory reserved " << string_human_readable_number(free_before - free_after)
             << " bytes. (" << string_human_readable_size(free_before - free_after) << ")";
 
 #if 0
@@ -679,7 +679,7 @@ class CUDADevice : public Device {
       }
     }
     else {
-      VLOG(1) << "Mapped host memory disabled, failed to get system RAM";
+      LOG(WARNING) << "Mapped host memory disabled, failed to get system RAM";
       map_host_limit = 0;
     }
 
@@ -690,7 +690,7 @@ class CUDADevice : public Device {
     device_working_headroom = 32 * 1024 * 1024LL;   // 32MB
     device_texture_headroom = 128 * 1024 * 1024LL;  // 128MB
 
-    VLOG(1) << "Mapped host memory limit set to " << string_human_readable_number(map_host_limit)
+    LOG(INFO) << "Mapped host memory limit set to " << string_human_readable_number(map_host_limit)
             << " bytes. (" << string_human_readable_size(map_host_limit) << ")";
   }
 
@@ -747,7 +747,7 @@ class CUDADevice : public Device {
        * multiple CUDA devices could be moving the memory. The
        * first one will do it, and the rest will adopt the pointer. */
       if (max_mem) {
-        VLOG(1) << "Move memory from device to host: " << max_mem->name;
+        LOG(WARNING) << "Move memory from device to host: " << max_mem->name;
 
         static thread_mutex move_mutex;
         thread_scoped_lock lock(move_mutex);
@@ -2527,13 +2527,13 @@ int2 CUDASplitKernel::split_kernel_global_size(device_memory &kg,
 
   cuda_assert(cuMemGetInfo(&free, &total));
 
-  VLOG(1) << "Maximum device allocation size: " << string_human_readable_number(free)
+  LOG(INFO) << "Maximum device allocation size: " << string_human_readable_number(free)
           << " bytes. (" << string_human_readable_size(free) << ").";
 
   size_t num_elements = max_elements_for_max_buffer_size(kg, data, free / 2);
   size_t side = round_down((int)sqrt(num_elements), 32);
   int2 global_size = make_int2(side, round_down(num_elements / side, 16));
-  VLOG(1) << "Global size: " << global_size << ".";
+  LOG(INFO) << "Global size: " << global_size << ".";
   return global_size;
 }
 
