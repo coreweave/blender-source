@@ -1,0 +1,34 @@
+image: docker:stable
+services:
+  - docker:dind
+
+stages:
+  - build
+  - release
+#  - deploy
+
+variables:
+  DOCKER_DRIVER: overlay2
+  CONTAINER_POLO_TEST_IMAGE: $CI_REGISTRY_IMAGE/2.80:$CI_COMMIT_REF_SLUG
+  CONTAINER_POLO_RELEASE_IMAGE: $CI_REGISTRY_IMAGE/2.80:latest
+  CONTAINER_POLO_STAGING_IMAGE: $CI_REGISTRY_IMAGE/2.80:bleeding
+
+before_script:
+  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+build-polo:
+  stage: build
+  script:
+    - docker pull $CONTAINER_POLO_RELEASE_IMAGE
+    - docker build --cache-from $CONTAINER_POLO_RELEASE_IMAGE -t $CONTAINER_POLO_TEST_IMAGE -t $CONTAINER_POLO_STAGING_IMAGE poloniex/
+    - docker push $CONTAINER_POLO_TEST_IMAGE
+    - docker push $CONTAINER_POLO_STAGING_IMAGE
+
+release-image:
+  stage: release
+  only:
+    - master
+  script:
+    - docker pull $CONTAINER_POLO_TEST_IMAGE
+    - docker tag $CONTAINER_POLO_TEST_IMAGE $CONTAINER_POLO_RELEASE_IMAGE
+    - docker push $CONTAINER_POLO_RELEASE_IMAGE
